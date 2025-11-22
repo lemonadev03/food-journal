@@ -1,0 +1,31 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Meal {
+  id          String   @id @default(cuid())
+  userId      String
+  description String
+  calories    Int?     // Optional: if we want to track calories later
+  quantity    String?  // e.g., "1 bowl", "200g"
+  consumedAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model Preference {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  defaultMealType String? // e.g., "Breakfast", "Lunch"
+  dietaryTags    String[] // e.g., ["Vegan", "Gluten-Free"]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
