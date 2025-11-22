@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { StackProvider, StackTheme } from "@stackframe/stack";
 import { stackClientApp } from "../stack/client";
 import { Geist, Geist_Mono } from "next/font/google";
@@ -16,6 +16,14 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+export const viewport: Viewport = {
+  themeColor: "#15803d",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false, // Often good for app-like feel
+};
+
 export const metadata: Metadata = {
   title: {
     default: "Food Journal",
@@ -24,6 +32,16 @@ export const metadata: Metadata = {
   description: "A clean, modern food journal designed for mobile first. Log meals, track habits, and stay consistent.",
   icons: {
     icon: "/icon.svg",
+    apple: "/icon.svg", // Reusing SVG for now, ideally PNG for Apple but Safari handles SVG decently or fallback
+  },
+  // manifest: "/manifest.json", // Next.js 14+ with manifest.ts automatically generates the link
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Food Journal",
+  },
+  formatDetection: {
+    telephone: false,
   },
 };
 
