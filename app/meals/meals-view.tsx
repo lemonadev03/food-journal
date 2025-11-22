@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { AddMealDrawer } from '@/components/add-meal-drawer';
 import { DateSelector } from '@/components/date-selector';
 import { MealList } from '@/components/meal-list';
@@ -21,10 +21,6 @@ export function MealsView({ initialMeals, initialDate }: MealsViewProps) {
   // When date changes, update URL query param
   const handleDateChange = (newDate: Date) => {
     setDate(newDate);
-    // Convert to YYYY-MM-DD for URL, avoiding timezone shifts by using local string parts or date-fns format
-    // A simple toISOString().split('T')[0] works if we are careful about UTC vs Local, 
-    // but usually it's safer to use a library format that respects local time if that's the intent.
-    // Let's stick to simple ISO date part for now.
     const dateString = newDate.toISOString().split('T')[0];
     router.push(`/meals?date=${dateString}`);
   };
@@ -35,18 +31,23 @@ export function MealsView({ initialMeals, initialDate }: MealsViewProps) {
   }, [initialDate]);
 
   return (
-    <div className="w-full max-w-md mx-auto p-4 space-y-6">
-      <header className="flex flex-col space-y-2">
-        <h1 className="text-2xl font-bold tracking-tight">Daily Log</h1>
-        <DateSelector date={date} onDateChange={handleDateChange} />
+    <div className="w-full max-w-md mx-auto flex flex-col h-[calc(100dvh-5rem)] md:h-[100dvh] overflow-hidden bg-background">
+      <header className="flex-none z-40 w-full p-4 pb-2 bg-background">
+        <div className="flex flex-col gap-3">
+           <div className="flex items-center justify-between px-1">
+               <h1 className="text-2xl font-bold tracking-tight text-foreground">Daily Log</h1>
+           </div>
+           <DateSelector date={date} onDateChange={handleDateChange} />
+        </div>
       </header>
       
-      <main>
+      <main className="flex-1 overflow-y-auto p-4 space-y-6 scroll-smooth">
         <MealList meals={initialMeals} />
       </main>
 
-      <AddMealDrawer selectedDate={date} />
+      <div className="fixed bottom-8 right-8 z-30 hidden md:block animate-in zoom-in duration-300">
+         <AddMealDrawer selectedDate={date} />
+      </div>
     </div>
   );
 }
-

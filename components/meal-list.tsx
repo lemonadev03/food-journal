@@ -1,15 +1,13 @@
 'use client';
 
 import * as React from 'react';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Utensils } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { deleteMeal } from '@/app/actions';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AddMealDrawer } from '@/components/add-meal-drawer';
 
-// Define a type for the Meal object that matches what Prisma returns
-// Ideally we import this from a shared types file or infer from Prisma client
 interface Meal {
   id: string;
   description: string;
@@ -26,8 +24,13 @@ export function MealList({ meals }: MealListProps) {
     meals,
     (state, mealIdToRemove) => state.filter((meal) => meal.id !== mealIdToRemove)
   );
+  
+  // State for the editing drawer
+  const [editingMeal, setEditingMeal] = React.useState<Meal | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = React.useState(false);
 
-  async function handleDelete(id: string) {
+  async function handleDelete(e: React.MouseEvent, id: string) {
+    e.stopPropagation(); // Prevent triggering the row click (edit)
     setOptimisticMeals(id);
     try {
       await deleteMeal(id);
@@ -35,50 +38,78 @@ export function MealList({ meals }: MealListProps) {
     } catch (error) {
       toast.error('Failed to delete meal');
       console.error(error);
-      // In a real app, we might want to rollback the optimistic update here, 
-      // but useOptimistic is reset on server revalidation anyway.
     }
+  }
+
+  function handleEditClick(meal: Meal) {
+      setEditingMeal(meal);
+      setIsDrawerOpen(true);
+  }
+
+  function onDrawerOpenChange(open: boolean) {
+      setIsDrawerOpen(open);
+      if (!open) {
+          // Add a small delay to clear selected meal so animation finishes smoothly
+          setTimeout(() => setEditingMeal(null), 300);
+      }
   }
 
   if (optimisticMeals.length === 0) {
     return (
-      <div className="text-center py-12 text-muted-foreground">
-        <p>No meals logged for this day.</p>
-        <p className="text-sm">Click the + button to add one!</p>
+      <div className="flex flex-col items-center justify-center py-16 text-center space-y-4 text-muted-foreground animate-in fade-in zoom-in-95 duration-500">
+        <div className="bg-muted/50 p-4 rounded-full">
+          <Utensils className="h-8 w-8 opacity-50" />
+        </div>
+        <div className="space-y-1">
+          <p className="font-medium text-foreground">No meals logged yet</p>
+          <p className="text-sm">Start your day by adding a meal</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4 pb-24"> {/* Add padding bottom for mobile nav/fab */}
-      {optimisticMeals.map((meal) => (
-        <Card key={meal.id} className="overflow-hidden">
-          <CardContent className="p-4 flex items-center justify-between">
-            <div className="space-y-1">
-              <p className="font-medium leading-none">{meal.description}</p>
-              <div className="flex gap-2 text-sm text-muted-foreground">
-                <span>{format(new Date(meal.consumedAt), 'h:mm a')}</span>
-                {meal.quantity && (
-                  <>
-                    <span>•</span>
-                    <span>{meal.quantity}</span>
-                  </>
-                )}
-              </div>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-muted-foreground hover:text-destructive"
-              onClick={() => handleDelete(meal.id)}
+    <div className="pb-24">
+        <div className="space-y-3">
+        {optimisticMeals.map((meal) => (
+            <div 
+                key={meal.id} 
+                onClick={() => handleEditClick(meal)}
+                className="group relative flex items-center justify-between p-4 bg-card rounded-xl border shadow-sm hover:shadow-md transition-all cursor-pointer active:scale-[0.98]"
             >
-              <Trash2 className="h-4 w-4" />
-              <span className="sr-only">Delete</span>
-            </Button>
-          </CardContent>
-        </Card>
-      ))}
+            <div className="flex flex-col gap-1.5">
+                <span className="text-[11px] uppercase tracking-wider font-mono text-muted-foreground/70">
+                {format(new Date(meal.consumedAt), 'h:mm a')}
+                </span>
+                <span className="font-medium text-foreground text-[15px] leading-tight">{meal.description}</span>
+            </div>
+            
+            <div className="flex items-center gap-3">
+                {meal.quantity && (
+                <span className="text-xs font-medium text-muted-foreground bg-secondary px-2.5 py-1 rounded-full">
+                    {meal.quantity}
+                </span>
+                )}
+                <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-all focus:opacity-100"
+                onClick={(e) => handleDelete(e, meal.id)}
+                >
+                <Trash2 className="h-4 w-4" />
+                <span className="sr-only">Delete</span>
+                </Button>
+            </div>
+            </div>
+        ))}
+        </div>
+        
+        {/* Reuse the AddMealDrawer for editing */}
+        <AddMealDrawer 
+            open={isDrawerOpen} 
+            onOpenChange={onDrawerOpenChange}
+            mealToEdit={editingMeal}
+        />
     </div>
   );
 }
-

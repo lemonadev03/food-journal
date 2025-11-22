@@ -17,8 +17,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Food Journal",
-  description: "Track your meals and nutrition",
+  title: {
+    default: "Food Journal",
+    template: "%s | Food Journal",
+  },
+  description: "A clean, modern food journal designed for mobile first. Log meals, track habits, and stay consistent.",
+  icons: {
+    icon: "/icon.svg",
+  },
 };
 
 export default function RootLayout({

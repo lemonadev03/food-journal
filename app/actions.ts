@@ -13,34 +13,47 @@ export async function addMeal(formData: FormData) {
   const description = formData.get('description') as string;
   const quantity = formData.get('quantity') as string;
   const dateStr = formData.get('date') as string;
+  const id = formData.get('id') as string;
   
   if (!description) {
     throw new Error('Description is required');
   }
 
-  // If date is provided, use it; otherwise default to now.
-  // We might want to combine the selected date with the current time if user is back-logging?
-  // For MVP, let's assume "now" if logging for today, or set the time to noon if logging for past/future date without specific time?
-  // Better: Let's just respect the date passed from the UI (which includes time if possible, or we default to current time on that date).
-  
   let consumedAt = new Date();
   if (dateStr) {
-    const selectedDate = new Date(dateStr);
-    // Keep the time from "now" but use the year/month/day from selectedDate
-    // This is a simple heuristic for "logging for this day".
-    const now = new Date();
-    selectedDate.setHours(now.getHours(), now.getMinutes(), now.getSeconds());
-    consumedAt = selectedDate;
+    // Trust the client to send the full timestamp (Date + Time)
+    consumedAt = new Date(dateStr);
   }
 
-  await prisma.meal.create({
-    data: {
-      userId: user.id,
-      description,
-      quantity,
-      consumedAt,
-    },
-  });
+  if (id) {
+    // Edit existing meal
+    const existingMeal = await prisma.meal.findUnique({
+        where: { id },
+    });
+
+    if (!existingMeal || existingMeal.userId !== user.id) {
+        throw new Error('Unauthorized or meal not found');
+    }
+
+    await prisma.meal.update({
+        where: { id },
+        data: {
+            description,
+            quantity,
+            consumedAt,
+        },
+    });
+  } else {
+    // Create new meal
+    await prisma.meal.create({
+        data: {
+          userId: user.id,
+          description,
+          quantity,
+          consumedAt,
+        },
+    });
+  }
 
   revalidatePath('/meals');
   return { success: true };
@@ -69,3 +82,27 @@ export async function deleteMeal(mealId: string) {
   return { success: true };
 }
 
+export async function getUniqueMealDescriptions() {
+    const user = await stackServerApp.getUser();
+    if (!user) {
+        return [];
+    }
+
+    // Group by description to get unique entries
+    // Prisma doesn't support distinct on findMany deeply efficiently with large datasets but for per-user it's fine.
+    // Or we can just fetch all distinct descriptions.
+    const uniqueMeals = await prisma.meal.findMany({
+        where: {
+            userId: user.id,
+        },
+        distinct: ['description'],
+        select: {
+            description: true,
+        },
+        orderBy: {
+            description: 'asc',
+        }
+    });
+
+    return uniqueMeals.map(m => m.description);
+}

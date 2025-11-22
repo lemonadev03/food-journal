@@ -19,10 +19,11 @@ interface DateSelectorProps {
 
 export function DateSelector({ date, onDateChange }: DateSelectorProps) {
   return (
-    <div className="flex items-center justify-between bg-card p-2 rounded-lg border shadow-sm mb-4">
+    <div className="flex items-center justify-between bg-muted/40 p-1 rounded-xl">
       <Button
         variant="ghost"
-        size="icon"
+        size="sm"
+        className="h-8 w-8 rounded-lg hover:bg-background hover:shadow-sm transition-all"
         onClick={() => onDateChange(subDays(date, 1))}
       >
         <ChevronLeft className="h-4 w-4" />
@@ -32,13 +33,14 @@ export function DateSelector({ date, onDateChange }: DateSelectorProps) {
         <PopoverTrigger asChild>
           <Button
             variant="ghost"
+            size="sm"
             className={cn(
-              "justify-start text-left font-medium min-w-[140px]",
+              "justify-center font-medium text-sm h-8 flex-1 mx-1 rounded-md hover:bg-background hover:shadow-sm transition-all",
               !date && "text-muted-foreground"
             )}
           >
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            {date ? format(date, "PPP") : <span>Pick a date</span>}
+            <CalendarIcon className="mr-2 h-4 w-4 opacity-70" />
+            {date ? format(date, "EEEE, MMM d") : <span>Pick a date</span>}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="center">
@@ -53,13 +55,12 @@ export function DateSelector({ date, onDateChange }: DateSelectorProps) {
 
       <Button
         variant="ghost"
-        size="icon"
+        size="sm"
+        className="h-8 w-8 rounded-lg hover:bg-background hover:shadow-sm transition-all"
         onClick={() => onDateChange(addDays(date, 1))}
-        disabled={isSameDay(date, new Date())} // Optional: prevent future logging if desired, but usually allowed
       >
         <ChevronRight className="h-4 w-4" />
       </Button>
     </div>
   );
 }
-
