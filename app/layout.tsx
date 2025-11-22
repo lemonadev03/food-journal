@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { StackProvider, StackTheme } from "@stackframe/stack";
 import { stackClientApp } from "../stack/client";
+import { stackServerApp } from "../stack/server";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner"
@@ -45,11 +46,13 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const user = await stackServerApp.getUser();
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body
@@ -57,10 +60,10 @@ export default function RootLayout({
       >
         <StackProvider app={stackClientApp}>
           <StackTheme>
-            <main className="flex min-h-screen flex-col items-center pb-20 md:pb-0">
+            <main className={`flex min-h-screen flex-col items-center md:pb-0 ${user ? "pb-20" : ""}`}>
                {children}
             </main>
-            <MobileNav />
+            {user && <MobileNav />}
             <Toaster />
           </StackTheme>
         </StackProvider>
